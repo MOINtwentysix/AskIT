@@ -68,6 +68,7 @@ export const auth = betterAuth({
   plugins: [
     username(),
     emailOTP({
+      sendVerificationOnSignUp: true,
       async sendVerificationOTP({ email, otp, type }) {
         const subject =
           type === "forget-password"
