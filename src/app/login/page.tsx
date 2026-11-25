@@ -129,8 +129,10 @@ function LoginForm() {
       setEmail(targetEmail);
       setInfo(`Bestätigungscode wurde an ${targetEmail} gesendet.`);
       setStep("VERIFY_OTP");
-    } catch {
-      setError("Registrierung fehlgeschlagen.");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Registrierung fehlgeschlagen."
+      );
     } finally {
       setLoading(false);
     }
