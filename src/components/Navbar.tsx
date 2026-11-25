@@ -30,7 +30,7 @@ export function Navbar({ userName, userRole }: NavbarProps) {
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900">
             <Wrench className="h-4 w-4" />
           </span>
-          <span className="text-base">Raum-Melder</span>
+          <span className="text-base">AskIT</span>
         </Link>
 
         <div className="flex items-center gap-2">

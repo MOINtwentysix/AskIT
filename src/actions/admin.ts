@@ -24,12 +24,12 @@ async function requireStaffSession(allowedRoles: readonly string[]) {
 
 const updateTicketStatusSchema = z.object({
   ticketId: z.string().min(1, "Ticket-ID fehlt."),
-  status: z.enum(["OPEN", "IN_PROGRESS", "RESOLVED"]),
+  status: z.string().trim().min(1, "Status darf nicht leer sein.").max(64),
 });
 
 export async function updateTicketStatus(
   ticketId: string,
-  status: "OPEN" | "IN_PROGRESS" | "RESOLVED"
+  status: string
 ): Promise<ActionResult> {
   const { error } = await requireStaffSession(["IT_TEAM", "ADMIN"]);
   if (error) return { success: false, error };
@@ -223,6 +223,149 @@ export async function toggleUserRole(
   await prisma.user.update({
     where: { id: parsed.data.userId },
     data: { role: parsed.data.role },
+  });
+
+  revalidatePath("/admin");
+  return { success: true };
+}
+
+const createCategorySchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "Kategoriename ist erforderlich.")
+    .max(100, "Kategoriename ist zu lang."),
+});
+
+export async function createCategory(
+  name: string
+): Promise<ActionResult<{ id: string; name: string }>> {
+  const { error } = await requireStaffSession(["IT_TEAM", "ADMIN"]);
+  if (error) return { success: false, error };
+
+  const parsed = createCategorySchema.safeParse({ name });
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Ungültiger Kategoriename.",
+    };
+  }
+
+  const existing = await prisma.category.findUnique({
+    where: { name: parsed.data.name },
+    select: { id: true },
+  });
+
+  if (existing) {
+    return {
+      success: false,
+      error: `Kategorie "${parsed.data.name}" existiert bereits.`,
+    };
+  }
+
+  const category = await prisma.category.create({
+    data: { name: parsed.data.name },
+    select: { id: true, name: true },
+  });
+
+  revalidatePath("/admin");
+  return { success: true, data: category };
+}
+
+const idSchema = z.object({
+  id: z.string().min(1, "ID fehlt."),
+});
+
+export async function deleteCategory(id: string): Promise<ActionResult> {
+  const { error } = await requireStaffSession(["IT_TEAM", "ADMIN"]);
+  if (error) return { success: false, error };
+
+  const parsed = idSchema.safeParse({ id });
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Ungültige ID.",
+    };
+  }
+
+  await prisma.category.delete({
+    where: { id: parsed.data.id },
+  });
+
+  revalidatePath("/admin");
+  return { success: true };
+}
+
+const createStatusOptionSchema = z.object({
+  key: z
+    .string()
+    .trim()
+    .min(1, "Status-Schlüssel ist erforderlich.")
+    .max(64, "Status-Schlüssel ist zu lang.")
+    .transform((v) => v.toUpperCase().replace(/\s+/g, "_")),
+  label: z
+    .string()
+    .trim()
+    .min(1, "Status-Bezeichnung ist erforderlich.")
+    .max(100, "Status-Bezeichnung ist zu lang."),
+  color: z.string().trim().min(1).max(32).default("zinc"),
+});
+
+export async function createStatusOption(input: {
+  key: string;
+  label: string;
+  color?: string;
+}): Promise<ActionResult<{ id: string; key: string }>> {
+  const { error } = await requireStaffSession(["IT_TEAM", "ADMIN"]);
+  if (error) return { success: false, error };
+
+  const parsed = createStatusOptionSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Ungültige Status-Daten.",
+    };
+  }
+
+  const existing = await prisma.statusOption.findUnique({
+    where: { key: parsed.data.key },
+    select: { id: true },
+  });
+
+  if (existing) {
+    return {
+      success: false,
+      error: `Ein Status mit dem Schlüssel "${parsed.data.key}" existiert bereits.`,
+    };
+  }
+
+  const statusOption = await prisma.statusOption.create({
+    data: {
+      key: parsed.data.key,
+      label: parsed.data.label,
+      color: parsed.data.color,
+    },
+    select: { id: true, key: true },
+  });
+
+  revalidatePath("/admin");
+  return { success: true, data: statusOption };
+}
+
+export async function deleteStatusOption(id: string): Promise<ActionResult> {
+  const { error } = await requireStaffSession(["IT_TEAM", "ADMIN"]);
+  if (error) return { success: false, error };
+
+  const parsed = idSchema.safeParse({ id });
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Ungültige ID.",
+    };
+  }
+
+  await prisma.statusOption.delete({
+    where: { id: parsed.data.id },
   });
 
   revalidatePath("/admin");

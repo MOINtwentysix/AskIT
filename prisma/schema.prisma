@@ -83,8 +83,8 @@ model Room {
 
 model Ticket {
   id           String    @id @default(cuid())
-  roomId       String
-  room         Room      @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  roomId       String?
+  room         Room?     @relation(fields: [roomId], references: [id], onDelete: SetNull)
   userId       String
   user         User      @relation("ReportedTickets", fields: [userId], references: [id], onDelete: Cascade)
   assignedToId String?
@@ -105,5 +105,19 @@ model Comment {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   content   String
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+}
+
+model StatusOption {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  label     String
+  color     String   @default("zinc")
   createdAt DateTime @default(now())
 }

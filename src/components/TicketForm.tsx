@@ -5,13 +5,13 @@ import { useRouter } from "next/navigation";
 import { AlertTriangle, Check, Loader2, Send } from "lucide-react";
 import { createTicket } from "@/actions/tickets";
 
-const CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   "Beamer / Display",
   "WLAN / Netzwerk",
   "PC / Laptop / iPad",
   "Ton / Kabel",
   "Sonstiges",
-] as const;
+];
 
 export interface RoomOption {
   id: string;
@@ -22,17 +22,20 @@ export interface RoomOption {
 
 interface TicketFormProps {
   rooms: RoomOption[];
+  categories?: string[];
   initialRoomId?: string;
 }
 
-export function TicketForm({ rooms, initialRoomId = "" }: TicketFormProps) {
+export function TicketForm({
+  rooms,
+  categories = DEFAULT_CATEGORIES,
+  initialRoomId = "",
+}: TicketFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const [roomId, setRoomId] = useState(initialRoomId);
-  const [category, setCategory] = useState<(typeof CATEGORIES)[number]>(
-    "Beamer / Display"
-  );
+  const [roomId, setRoomId] = useState(initialRoomId || "NONE");
+  const [category, setCategory] = useState(categories[0] ?? "Sonstiges");
   const [urgency, setUrgency] = useState<"NORMAL" | "URGENT">("NORMAL");
   const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -75,18 +78,17 @@ export function TicketForm({ rooms, initialRoomId = "" }: TicketFormProps) {
           htmlFor="roomId"
           className="block text-sm font-medium text-foreground"
         >
-          Raum
+          Raum <span className="text-xs font-normal text-muted">(optional)</span>
         </label>
         <select
           id="roomId"
           name="roomId"
-          required
           value={roomId}
           onChange={(e) => setRoomId(e.target.value)}
           className="h-12 w-full rounded-xl border border-border bg-surface px-3.5 text-base text-foreground focus:border-zinc-900 focus:outline-none dark:focus:border-zinc-100"
         >
-          <option value="" disabled>
-            Bitte Raum auswählen…
+          <option value="NONE">
+            Allgemein / Kein Raum (z.B. iPad Passwort)
           </option>
           {rooms.map((room) => (
             <option key={room.id} value={room.id}>
@@ -108,12 +110,10 @@ export function TicketForm({ rooms, initialRoomId = "" }: TicketFormProps) {
           name="category"
           required
           value={category}
-          onChange={(e) =>
-            setCategory(e.target.value as (typeof CATEGORIES)[number])
-          }
+          onChange={(e) => setCategory(e.target.value)}
           className="h-12 w-full rounded-xl border border-border bg-surface px-3.5 text-base text-foreground focus:border-zinc-900 focus:outline-none dark:focus:border-zinc-100"
         >
-          {CATEGORIES.map((cat) => (
+          {categories.map((cat) => (
             <option key={cat} value={cat}>
               {cat}
             </option>

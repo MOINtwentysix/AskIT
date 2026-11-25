@@ -1,6 +1,6 @@
 {
-  "name": "Raum-Melder",
-  "short_name": "Raum-Melder",
+  "name": "AskIT",
+  "short_name": "AskIT",
   "description": "Schnelle Störungsmeldung für Räume und Ausstattung",
   "start_url": "/",
   "display": "standalone",

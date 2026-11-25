@@ -6,19 +6,9 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-const TICKET_CATEGORIES = [
-  "Beamer / Display",
-  "WLAN / Netzwerk",
-  "PC / Laptop / iPad",
-  "Ton / Kabel",
-  "Sonstiges",
-] as const;
-
 const createTicketSchema = z.object({
-  roomId: z.string().min(1, "Bitte einen Raum auswählen."),
-  category: z.enum(TICKET_CATEGORIES, {
-    error: "Bitte eine gültige Kategorie auswählen.",
-  }),
+  roomId: z.string().optional(),
+  category: z.string().trim().min(1, "Bitte eine gültige Kategorie auswählen."),
   urgency: z.enum(["NORMAL", "URGENT"], {
     error: "Bitte eine gültige Dringlichkeit auswählen.",
   }),
@@ -51,18 +41,24 @@ export async function createTicket(input: CreateTicketInput) {
     return { success: false as const, error: firstIssue };
   }
 
-  const room = await prisma.room.findUnique({
-    where: { id: parsed.data.roomId },
-    select: { id: true },
-  });
+  const rawRoomId = parsed.data.roomId?.trim();
+  const normalizedRoomId =
+    !rawRoomId || rawRoomId === "NONE" ? null : rawRoomId;
 
-  if (!room) {
-    return { success: false as const, error: "Ausgewählter Raum existiert nicht." };
+  if (normalizedRoomId) {
+    const room = await prisma.room.findUnique({
+      where: { id: normalizedRoomId },
+      select: { id: true },
+    });
+
+    if (!room) {
+      return { success: false as const, error: "Ausgewählter Raum existiert nicht." };
+    }
   }
 
   const ticket = await prisma.ticket.create({
     data: {
-      roomId: parsed.data.roomId,
+      roomId: normalizedRoomId,
       userId: session.user.id,
       category: parsed.data.category,
       urgency: parsed.data.urgency,

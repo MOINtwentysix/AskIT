@@ -80,7 +80,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS "Room_code_key" ON "Room"("code");
 
 CREATE TABLE IF NOT EXISTS "Ticket" (
     "id" TEXT NOT NULL,
-    "roomId" TEXT NOT NULL,
+    "roomId" TEXT,
     "userId" TEXT NOT NULL,
     "assignedToId" TEXT,
     "category" TEXT NOT NULL,
@@ -91,7 +91,7 @@ CREATE TABLE IF NOT EXISTS "Ticket" (
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Ticket_pkey" PRIMARY KEY ("id"),
-    CONSTRAINT "Ticket_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Room"("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "Ticket_roomId_fkey" FOREIGN KEY ("roomId") REFERENCES "Room"("id") ON DELETE SET NULL ON UPDATE CASCADE,
     CONSTRAINT "Ticket_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "Ticket_assignedToId_fkey" FOREIGN KEY ("assignedToId") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE CASCADE
 );
@@ -107,3 +107,25 @@ CREATE TABLE IF NOT EXISTS "Comment" (
     CONSTRAINT "Comment_ticketId_fkey" FOREIGN KEY ("ticketId") REFERENCES "Ticket"("id") ON DELETE CASCADE ON UPDATE CASCADE,
     CONSTRAINT "Comment_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS "Category" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Category_pkey" PRIMARY KEY ("id")
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "Category_name_key" ON "Category"("name");
+
+CREATE TABLE IF NOT EXISTS "StatusOption" (
+    "id" TEXT NOT NULL,
+    "key" TEXT NOT NULL,
+    "label" TEXT NOT NULL,
+    "color" TEXT NOT NULL DEFAULT 'zinc',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "StatusOption_pkey" PRIMARY KEY ("id")
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS "StatusOption_key_key" ON "StatusOption"("key");

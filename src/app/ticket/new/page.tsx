@@ -40,15 +40,33 @@ async function NewTicketContent({ searchParams }: NewTicketPageProps) {
 
   const { room: roomParam } = await searchParams;
 
-  const rooms = await prisma.room.findMany({
-    orderBy: { code: "asc" },
-    select: {
-      id: true,
-      code: true,
-      name: true,
-      building: true,
-    },
-  });
+  const [rooms, dbCategories] = await Promise.all([
+    prisma.room.findMany({
+      orderBy: { code: "asc" },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        building: true,
+      },
+    }),
+    prisma.category.findMany({
+      orderBy: { name: "asc" },
+      select: { name: true },
+    }),
+  ]);
+
+  const DEFAULT_CATEGORIES = [
+    "Beamer / Display",
+    "WLAN / Netzwerk",
+    "PC / Laptop / iPad",
+    "Ton / Kabel",
+    "Sonstiges",
+  ];
+  const categories =
+    dbCategories.length > 0
+      ? dbCategories.map((c) => c.name)
+      : DEFAULT_CATEGORIES;
 
   const matchedRoom = roomParam
     ? rooms.find((r) => r.code.toLowerCase() === roomParam.trim().toLowerCase())
@@ -78,7 +96,11 @@ async function NewTicketContent({ searchParams }: NewTicketPageProps) {
           </p>
 
           <div className="mt-6">
-            <TicketForm rooms={rooms} initialRoomId={matchedRoom?.id ?? ""} />
+            <TicketForm
+              rooms={rooms}
+              categories={categories}
+              initialRoomId={matchedRoom?.id ?? ""}
+            />
           </div>
         </div>
       </main>

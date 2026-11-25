@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import Link from "next/link";
 import {
   AlertTriangle,
   CheckCircle2,
   Clock,
+  Maximize2,
   MessageSquare,
   Send,
   UserCheck,
@@ -26,7 +28,7 @@ export interface AdminTicketItem {
     code: string;
     name: string;
     building: string;
-  };
+  } | null;
   user: {
     id: string;
     name: string;
@@ -49,26 +51,28 @@ export interface AdminTicketItem {
   }>;
 }
 
-type FilterKey = "ALL" | "OPEN" | "IN_PROGRESS" | "RESOLVED" | "URGENT";
+export interface StatusOptionItem {
+  id: string;
+  key: string;
+  label: string;
+  color: string;
+}
 
-const FILTERS: Array<{ key: FilterKey; label: string }> = [
-  { key: "ALL", label: "Alle" },
-  { key: "OPEN", label: "Offen" },
-  { key: "IN_PROGRESS", label: "In Bearbeitung" },
-  { key: "RESOLVED", label: "Erledigt" },
-  { key: "URGENT", label: "Dringend" },
+type FilterKey = string;
+
+const DEFAULT_STATUS_OPTIONS: Array<{ key: string; label: string; color: string }> = [
+  { key: "OPEN", label: "Offen", color: "amber" },
+  { key: "IN_PROGRESS", label: "In Bearbeitung", color: "blue" },
+  { key: "RESOLVED", label: "Erledigt", color: "emerald" },
 ];
 
-const STATUS_LABELS: Record<string, string> = {
-  OPEN: "Offen",
-  IN_PROGRESS: "In Bearbeitung",
-  RESOLVED: "Erledigt",
-};
-
-const STATUS_BADGES: Record<string, string> = {
-  OPEN: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20",
-  IN_PROGRESS: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
-  RESOLVED: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20",
+const COLOR_BADGES: Record<string, string> = {
+  amber: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20",
+  blue: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/20",
+  emerald: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20",
+  red: "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/20",
+  purple: "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/20",
+  zinc: "bg-zinc-500/10 text-zinc-700 dark:text-zinc-300 border-zinc-500/20",
 };
 
 function formatDate(value: string | Date) {
@@ -81,15 +85,37 @@ function formatDate(value: string | Date) {
 export function AdminTicketBoard({
   tickets,
   currentUserId,
+  statusOptions = [],
 }: {
   tickets: AdminTicketItem[];
   currentUserId: string;
+  statusOptions?: StatusOptionItem[];
 }) {
   const [filter, setFilter] = useState<FilterKey>("ALL");
   const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
   const [commentDrafts, setCommentDrafts] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const mergedStatuses = [...DEFAULT_STATUS_OPTIONS];
+  for (const opt of statusOptions) {
+    if (!mergedStatuses.some((s) => s.key === opt.key)) {
+      mergedStatuses.push({ key: opt.key, label: opt.label, color: opt.color });
+    }
+  }
+
+  const statusLabels: Record<string, string> = {};
+  const statusBadges: Record<string, string> = {};
+  for (const s of mergedStatuses) {
+    statusLabels[s.key] = s.label;
+    statusBadges[s.key] = COLOR_BADGES[s.color] ?? COLOR_BADGES.zinc;
+  }
+
+  const filters: Array<{ key: FilterKey; label: string }> = [
+    { key: "ALL", label: "Alle" },
+    ...mergedStatuses.map((s) => ({ key: s.key, label: s.label })),
+    { key: "URGENT", label: "Dringend" },
+  ];
 
   const filteredTickets = tickets.filter((ticket) => {
     if (filter === "ALL") return true;
@@ -99,10 +125,7 @@ export function AdminTicketBoard({
     return ticket.status === filter;
   });
 
-  function handleStatusChange(
-    ticketId: string,
-    status: "OPEN" | "IN_PROGRESS" | "RESOLVED"
-  ) {
+  function handleStatusChange(ticketId: string, status: string) {
     setError(null);
     startTransition(async () => {
       const res = await updateTicketStatus(ticketId, status);
@@ -136,7 +159,7 @@ export function AdminTicketBoard({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-1.5">
-          {FILTERS.map((item) => {
+          {filters.map((item) => {
             const active = filter === item.key;
             return (
               <button
@@ -186,15 +209,23 @@ export function AdminTicketBoard({
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">
-                        {ticket.room.code}
-                      </span>
-                      <span className="text-sm font-semibold">
-                        {ticket.room.name}
-                      </span>
-                      <span className="text-xs text-muted">
-                        ({ticket.room.building})
-                      </span>
+                      {ticket.room ? (
+                        <>
+                          <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">
+                            {ticket.room.code}
+                          </span>
+                          <span className="text-sm font-semibold">
+                            {ticket.room.name}
+                          </span>
+                          <span className="text-xs text-muted">
+                            ({ticket.room.building})
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-sm font-semibold">
+                          Allgemein / Kein Raum
+                        </span>
+                      )}
                       {isUrgent && (
                         <span className="inline-flex items-center gap-1 rounded-full border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-600 dark:text-red-400">
                           <AlertTriangle className="h-3 w-3" />
@@ -214,18 +245,27 @@ export function AdminTicketBoard({
                     </p>
                   </div>
 
-                  <span
-                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${
-                      STATUS_BADGES[ticket.status] ?? "border-border text-muted"
-                    }`}
-                  >
-                    {ticket.status === "RESOLVED" ? (
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                    ) : (
-                      <Clock className="h-3.5 w-3.5" />
-                    )}
-                    {STATUS_LABELS[ticket.status] ?? ticket.status}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href={`/ticket/${ticket.id}`}
+                      className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-muted hover:text-foreground transition-colors"
+                    >
+                      <Maximize2 className="h-3.5 w-3.5" />
+                      Vollansicht
+                    </Link>
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${
+                        statusBadges[ticket.status] ?? "border-border text-muted"
+                      }`}
+                    >
+                      {ticket.status === "RESOLVED" ? (
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                      ) : (
+                        <Clock className="h-3.5 w-3.5" />
+                      )}
+                      {statusLabels[ticket.status] ?? ticket.status}
+                    </span>
+                  </div>
                 </div>
 
                 <p className="text-sm leading-relaxed whitespace-pre-wrap">
@@ -239,16 +279,15 @@ export function AdminTicketBoard({
                       value={ticket.status}
                       disabled={isPending}
                       onChange={(e) =>
-                        handleStatusChange(
-                          ticket.id,
-                          e.target.value as "OPEN" | "IN_PROGRESS" | "RESOLVED"
-                        )
+                        handleStatusChange(ticket.id, e.target.value)
                       }
                       className="rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-foreground/20 disabled:opacity-50"
                     >
-                      <option value="OPEN">Offen</option>
-                      <option value="IN_PROGRESS">In Bearbeitung</option>
-                      <option value="RESOLVED">Erledigt</option>
+                      {mergedStatuses.map((s) => (
+                        <option key={s.key} value={s.key}>
+                          {s.label}
+                        </option>
+                      ))}
                     </select>
 
                     <button

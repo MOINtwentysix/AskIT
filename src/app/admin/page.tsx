@@ -2,14 +2,15 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { ArrowLeft, QrCode, Ticket, Users } from "lucide-react";
+import { ArrowLeft, QrCode, SlidersHorizontal, Ticket, Users } from "lucide-react";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AdminTicketBoard } from "@/components/AdminTicketBoard";
 import { AdminRoomsQR } from "@/components/AdminRoomsQR";
+import { AdminSettingsManager } from "@/components/AdminSettingsManager";
 import { AdminTeamManager } from "@/components/AdminTeamManager";
 
-type TabKey = "tickets" | "rooms" | "team";
+type TabKey = "tickets" | "rooms" | "settings" | "team";
 
 export default function AdminPage({
   searchParams,
@@ -47,11 +48,13 @@ async function AdminContent({
   const activeTab: TabKey =
     requestedTab === "rooms"
       ? "rooms"
+      : requestedTab === "settings"
+      ? "settings"
       : requestedTab === "team" && isAdmin
       ? "team"
       : "tickets";
 
-  const [tickets, rooms, users] = await Promise.all([
+  const [tickets, rooms, categories, statusOptions, users] = await Promise.all([
     prisma.ticket.findMany({
       orderBy: { createdAt: "desc" },
       include: {
@@ -68,6 +71,14 @@ async function AdminContent({
       orderBy: [{ building: "asc" }, { code: "asc" }],
       include: { _count: { select: { tickets: true } } },
     }),
+    prisma.category.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
+    }),
+    prisma.statusOption.findMany({
+      orderBy: { createdAt: "asc" },
+      select: { id: true, key: true, label: true, color: true },
+    }),
     isAdmin
       ? prisma.user.findMany({
           orderBy: [{ role: "asc" }, { name: "asc" }],
@@ -79,6 +90,7 @@ async function AdminContent({
   const tabs: Array<{ key: TabKey; label: string; icon: typeof Ticket }> = [
     { key: "tickets", label: "Ticket-Board", icon: Ticket },
     { key: "rooms", label: "Räume & QR-Codes", icon: QrCode },
+    { key: "settings", label: "Kategorien & Status", icon: SlidersHorizontal },
     ...(isAdmin
       ? [{ key: "team" as const, label: "Team-Verwaltung", icon: Users }]
       : []),
@@ -134,9 +146,16 @@ async function AdminContent({
           <AdminTicketBoard
             tickets={tickets}
             currentUserId={session.user.id}
+            statusOptions={statusOptions}
           />
         )}
         {activeTab === "rooms" && <AdminRoomsQR rooms={rooms} />}
+        {activeTab === "settings" && (
+          <AdminSettingsManager
+            categories={categories}
+            statusOptions={statusOptions}
+          />
+        )}
         {activeTab === "team" && isAdmin && (
           <AdminTeamManager users={users} currentUserId={session.user.id} />
         )}

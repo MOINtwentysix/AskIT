@@ -52,6 +52,8 @@ async function DashboardContent() {
   });
 
   const userRole = (session.user as { role?: string }).role ?? "USER";
+  const activeTickets = tickets.filter((t) => t.status !== "RESOLVED");
+  const resolvedTickets = tickets.filter((t) => t.status === "RESOLVED");
 
   return (
     <div className="min-h-screen bg-background">
@@ -72,15 +74,16 @@ async function DashboardContent() {
               Meine Meldungen
             </h1>
             <span className="text-xs font-medium text-muted">
-              {tickets.length} {tickets.length === 1 ? "Ticket" : "Tickets"}
+              {activeTickets.length}{" "}
+              {activeTickets.length === 1 ? "aktives Ticket" : "aktive Tickets"}
             </span>
           </div>
 
-          {tickets.length === 0 ? (
+          {activeTickets.length === 0 ? (
             <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-surface px-6 py-12 text-center">
               <Inbox className="h-10 w-10 text-muted/60" />
               <p className="mt-3 text-sm font-medium text-foreground">
-                Noch keine Tickets gemeldet
+                Keine offenen Tickets
               </p>
               <p className="mt-1 text-xs text-muted">
                 Tippen Sie oben auf „Neues IT-Ticket melden“, um eine Störung zu
@@ -89,7 +92,7 @@ async function DashboardContent() {
             </div>
           ) : (
             <ul className="space-y-3">
-              {tickets.map((ticket) => (
+              {activeTickets.map((ticket) => (
                 <li key={ticket.id}>
                   <Link
                     href={`/ticket/${ticket.id}`}
@@ -104,7 +107,9 @@ async function DashboardContent() {
 
                         <div>
                           <p className="truncate text-base font-semibold text-foreground">
-                            {ticket.room.code} – {ticket.room.name}
+                            {ticket.room
+                              ? `${ticket.room.code} – ${ticket.room.name}`
+                              : "Allgemein / Kein Raum"}
                           </p>
                           <p className="mt-0.5 line-clamp-2 text-sm text-muted">
                             {ticket.description}
@@ -135,6 +140,45 @@ async function DashboardContent() {
             </ul>
           )}
         </section>
+
+        {resolvedTickets.length > 0 && (
+          <details className="group rounded-2xl border border-border bg-surface p-4">
+            <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-foreground">
+              <span>Gelöste Tickets</span>
+              <span className="inline-flex items-center rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
+                {resolvedTickets.length}
+              </span>
+            </summary>
+            <ul className="mt-3 space-y-3">
+              {resolvedTickets.map((ticket) => (
+                <li key={ticket.id}>
+                  <Link
+                    href={`/ticket/${ticket.id}`}
+                    className="block rounded-xl border border-border bg-background p-3.5 transition-colors hover:border-zinc-400 dark:hover:border-zinc-600"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1 space-y-1.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <TicketStatusBadge status={ticket.status} />
+                          <TicketUrgencyBadge urgency={ticket.urgency} />
+                        </div>
+                        <p className="truncate text-sm font-semibold text-foreground">
+                          {ticket.room
+                            ? `${ticket.room.code} – ${ticket.room.name}`
+                            : "Allgemein / Kein Raum"}
+                        </p>
+                        <p className="line-clamp-1 text-xs text-muted">
+                          {ticket.description}
+                        </p>
+                      </div>
+                      <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-muted" />
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
       </main>
     </div>
   );

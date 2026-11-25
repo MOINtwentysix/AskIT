@@ -116,18 +116,29 @@ async function TicketDetailContent({ params }: TicketDetailPageProps) {
           </div>
 
           <h1 className="mt-3 text-xl font-bold tracking-tight text-foreground">
-            {ticket.room.code} – {ticket.room.name}
+            {ticket.room
+              ? `${ticket.room.code} – ${ticket.room.name}`
+              : "Allgemein / Kein Raum"}
           </h1>
 
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-muted">
-            <span className="inline-flex items-center gap-1">
-              <Building2 className="h-3.5 w-3.5" />
-              {ticket.room.building}
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <MapPin className="h-3.5 w-3.5" />
-              Raum {ticket.room.code}
-            </span>
+            {ticket.room ? (
+              <>
+                <span className="inline-flex items-center gap-1">
+                  <Building2 className="h-3.5 w-3.5" />
+                  {ticket.room.building}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <MapPin className="h-3.5 w-3.5" />
+                  Raum {ticket.room.code}
+                </span>
+              </>
+            ) : (
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="h-3.5 w-3.5" />
+                Allgemein / Kein Raum
+              </span>
+            )}
             <span className="inline-flex items-center gap-1">
               <Tag className="h-3.5 w-3.5" />
               {ticket.category}
