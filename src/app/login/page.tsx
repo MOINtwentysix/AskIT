@@ -122,7 +122,10 @@ function LoginForm() {
         password,
       });
       if (signUpError) {
-        setError(signUpError.message ?? "Registrierung fehlgeschlagen.");
+        setError(
+          signUpError.message ||
+            `${signUpError.status ?? ""} ${signUpError.statusText ?? "Registrierung fehlgeschlagen."}`.trim()
+        );
         return;
       }
       setItsUsername(cleaned);
