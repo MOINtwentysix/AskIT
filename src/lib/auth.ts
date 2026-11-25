@@ -71,8 +71,8 @@ export const auth = betterAuth({
       async sendVerificationOTP({ email, otp, type }) {
         const subject =
           type === "forget-password"
-            ? "BIB Ticket – Passwort zurücksetzen"
-            : "BIB Ticket – Dein Bestätigungscode";
+            ? "AskIT – Passwort zurücksetzen"
+            : "AskIT – Dein Bestätigungscode";
 
         const text =
           type === "forget-password"
@@ -89,7 +89,7 @@ export const auth = betterAuth({
         await resend.emails.send({
           from:
             process.env.RESEND_FROM_EMAIL ??
-            "BIB Ticket <noreply@schule.bremen.de>",
+            "AskIT <noreply@schule.bremen.de>",
           to: email,
           subject,
           text,

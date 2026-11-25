@@ -226,7 +226,7 @@ function LoginForm() {
           <div className="flex items-center justify-between">
             <span className="inline-flex items-center gap-1.5 rounded-md bg-zinc-100 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
               <ScanBarcode className="h-3.5 w-3.5" />
-              BIB Ticket
+              AskIT
             </span>
             {step !== "BARCODE_ENTRY" && (
               <button
