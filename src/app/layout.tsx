@@ -13,13 +13,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Raum-Melder",
+  title: "AskIT",
   description: "Schnelle Störungsmeldung für Räume und Ausstattung",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Raum-Melder",
+    title: "AskIT",
   },
 };
 
