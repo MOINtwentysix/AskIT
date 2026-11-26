@@ -34,7 +34,8 @@ export function TicketForm({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
-  const [roomId, setRoomId] = useState(initialRoomId || "NONE");
+  const [ticketScope, setTicketScope] = useState<"ROOM" | "GENERAL">("ROOM");
+  const [roomId, setRoomId] = useState(initialRoomId || rooms[0]?.id || "NONE");
   const [category, setCategory] = useState(categories[0] ?? "Sonstiges");
   const [urgency, setUrgency] = useState<"NORMAL" | "URGENT">("NORMAL");
   const [description, setDescription] = useState("");
@@ -46,7 +47,7 @@ export function TicketForm({
 
     startTransition(async () => {
       const result = await createTicket({
-        roomId,
+        roomId: ticketScope === "GENERAL" ? "NONE" : roomId,
         category,
         urgency,
         description,
@@ -74,29 +75,58 @@ export function TicketForm({
       )}
 
       <div className="space-y-2">
-        <label
-          htmlFor="roomId"
-          className="block text-sm font-medium text-foreground"
-        >
-          Raum <span className="text-xs font-normal text-muted">(optional)</span>
-        </label>
-        <select
-          id="roomId"
-          name="roomId"
-          value={roomId}
-          onChange={(e) => setRoomId(e.target.value)}
-          className="h-12 w-full rounded-xl border border-border bg-surface px-3.5 text-base text-foreground focus:border-zinc-900 focus:outline-none dark:focus:border-zinc-100"
-        >
-          <option value="NONE">
-            Allgemein / Kein Raum (z.B. iPad Passwort)
-          </option>
-          {rooms.map((room) => (
-            <option key={room.id} value={room.id}>
-              {room.code} – {room.name} ({room.building})
-            </option>
-          ))}
-        </select>
+        <span className="block text-sm font-medium text-foreground">
+          Bereich
+        </span>
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => setTicketScope("ROOM")}
+            className={`flex h-12 items-center justify-center rounded-xl border text-sm font-medium transition-colors ${
+              ticketScope === "ROOM"
+                ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
+                : "border-border bg-surface text-foreground hover:bg-zinc-50 dark:hover:bg-zinc-900"
+            }`}
+          >
+            Raum
+          </button>
+          <button
+            type="button"
+            onClick={() => setTicketScope("GENERAL")}
+            className={`flex h-12 items-center justify-center rounded-xl border text-sm font-medium transition-colors ${
+              ticketScope === "GENERAL"
+                ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
+                : "border-border bg-surface text-foreground hover:bg-zinc-50 dark:hover:bg-zinc-900"
+            }`}
+          >
+            Allgemein
+          </button>
+        </div>
       </div>
+
+      {ticketScope === "ROOM" && (
+        <div className="space-y-2">
+          <label
+            htmlFor="roomId"
+            className="block text-sm font-medium text-foreground"
+          >
+            Raum
+          </label>
+          <select
+            id="roomId"
+            name="roomId"
+            value={roomId}
+            onChange={(e) => setRoomId(e.target.value)}
+            className="h-12 w-full rounded-xl border border-border bg-surface px-3.5 text-base text-foreground focus:border-zinc-900 focus:outline-none dark:focus:border-zinc-100"
+          >
+            {rooms.map((room) => (
+              <option key={room.id} value={room.id}>
+                {room.code} – {room.name} ({room.building})
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="space-y-2">
         <label
