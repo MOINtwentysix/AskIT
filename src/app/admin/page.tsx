@@ -71,14 +71,18 @@ async function AdminContent({
       orderBy: [{ building: "asc" }, { code: "asc" }],
       include: { _count: { select: { tickets: true } } },
     }),
-    prisma.category.findMany({
-      orderBy: { name: "asc" },
-      select: { id: true, name: true },
-    }),
-    prisma.statusOption.findMany({
-      orderBy: { createdAt: "asc" },
-      select: { id: true, key: true, label: true, color: true },
-    }),
+    prisma.category
+      .findMany({
+        orderBy: { name: "asc" },
+        select: { id: true, name: true },
+      })
+      .catch(() => []),
+    prisma.statusOption
+      .findMany({
+        orderBy: { createdAt: "asc" },
+        select: { id: true, key: true, label: true, color: true },
+      })
+      .catch(() => []),
     isAdmin
       ? prisma.user.findMany({
           orderBy: [{ role: "asc" }, { name: "asc" }],

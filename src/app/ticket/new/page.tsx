@@ -50,10 +50,12 @@ async function NewTicketContent({ searchParams }: NewTicketPageProps) {
         building: true,
       },
     }),
-    prisma.category.findMany({
-      orderBy: { name: "asc" },
-      select: { name: true },
-    }),
+    prisma.category
+      .findMany({
+        orderBy: { name: "asc" },
+        select: { name: true },
+      })
+      .catch(() => []),
   ]);
 
   const DEFAULT_CATEGORIES = [

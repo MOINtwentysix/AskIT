@@ -70,15 +70,50 @@ export const auth = betterAuth({
     emailOTP({
       sendVerificationOnSignUp: true,
       async sendVerificationOTP({ email, otp, type }) {
-        const subject =
-          type === "forget-password"
-            ? "AskIT – Passwort zurücksetzen"
-            : "AskIT – Dein Bestätigungscode";
+        const isReset = type === "forget-password";
+        const subject = isReset
+          ? "AskIT – Passwort zurücksetzen"
+          : "AskIT – Dein Bestätigungscode";
 
-        const text =
-          type === "forget-password"
-            ? `Dein Code zum Zurücksetzen des Passworts lautet: ${otp}`
-            : `Dein 6-stelliger Bestätigungscode lautet: ${otp}`;
+        const text = isReset
+          ? `Dein Code zum Zurücksetzen des Passworts lautet: ${otp}`
+          : `Dein 6-stelliger Bestätigungscode lautet: ${otp}`;
+
+        const heading = isReset
+          ? "Passwort zurücksetzen"
+          : "E-Mail bestätigen";
+        const intro = isReset
+          ? "Du hast angefordert, dein AskIT-Passwort zurückzusetzen. Nutze diesen 6-stelligen Code:"
+          : "Willkommen bei AskIT! Nutze diesen 6-stelligen Code, um deinen Account freizuschalten:";
+
+        const html = `
+<!DOCTYPE html>
+<html lang="de">
+<head><meta charset="utf-8" /></head>
+<body style="margin:0;padding:0;background-color:#09090b;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#fafafa;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:460px;background-color:#18181b;border:1px solid #27272a;border-radius:16px;padding:32px;">
+          <tr>
+            <td>
+              <div style="display:inline-block;padding:4px 10px;border-radius:999px;background-color:#27272a;color:#e4e4e7;font-size:12px;font-weight:600;letter-spacing:0.04em;">AskIT</div>
+              <h1 style="margin:16px 0 8px;font-size:22px;font-weight:700;color:#ffffff;">${heading}</h1>
+              <p style="margin:0 0 24px;font-size:14px;line-height:1.5;color:#a1a1aa;">${intro}</p>
+              <div style="background-color:#09090b;border:1px solid #27272a;border-radius:12px;padding:20px;text-align:center;margin-bottom:24px;">
+                <span style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:32px;font-weight:700;letter-spacing:0.25em;color:#ffffff;">${otp}</span>
+              </div>
+              <p style="margin:0;font-size:12px;line-height:1.5;color:#71717a;">
+                Dieser Code ist nur kurze Zeit gültig. Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
 
         if (!resend) {
           console.info(
@@ -94,6 +129,7 @@ export const auth = betterAuth({
           to: email,
           subject,
           text,
+          html,
         });
       },
     }),
