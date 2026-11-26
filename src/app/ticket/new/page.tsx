@@ -58,17 +58,7 @@ async function NewTicketContent({ searchParams }: NewTicketPageProps) {
       .catch(() => []),
   ]);
 
-  const DEFAULT_CATEGORIES = [
-    "Beamer / Display",
-    "WLAN / Netzwerk",
-    "PC / Laptop / iPad",
-    "Ton / Kabel",
-    "Sonstiges",
-  ];
-  const categories =
-    dbCategories.length > 0
-      ? dbCategories.map((c) => c.name)
-      : DEFAULT_CATEGORIES;
+  const categories = dbCategories.map((c) => c.name);
 
   const matchedRoom = roomParam
     ? rooms.find((r) => r.code.toLowerCase() === roomParam.trim().toLowerCase())

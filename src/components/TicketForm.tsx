@@ -28,7 +28,7 @@ interface TicketFormProps {
 
 export function TicketForm({
   rooms,
-  categories = DEFAULT_CATEGORIES,
+  categories = [],
   initialRoomId = "",
 }: TicketFormProps) {
   const router = useRouter();
@@ -36,7 +36,17 @@ export function TicketForm({
 
   const [ticketScope, setTicketScope] = useState<"ROOM" | "GENERAL">("ROOM");
   const [roomId, setRoomId] = useState(initialRoomId || rooms[0]?.id || "NONE");
-  const [category, setCategory] = useState(categories[0] ?? "Sonstiges");
+  const generalCategories =
+    categories.length > 0 ? categories : ["Sonstiges"];
+  const activeCategories =
+    ticketScope === "ROOM" ? DEFAULT_CATEGORIES : generalCategories;
+  const [category, setCategory] = useState(DEFAULT_CATEGORIES[0]);
+
+  function handleScopeChange(scope: "ROOM" | "GENERAL") {
+    setTicketScope(scope);
+    const nextList = scope === "ROOM" ? DEFAULT_CATEGORIES : generalCategories;
+    setCategory(nextList[0] ?? "Sonstiges");
+  }
   const [urgency, setUrgency] = useState<"NORMAL" | "URGENT">("NORMAL");
   const [description, setDescription] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -81,7 +91,7 @@ export function TicketForm({
         <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
-            onClick={() => setTicketScope("ROOM")}
+            onClick={() => handleScopeChange("ROOM")}
             className={`flex h-12 items-center justify-center rounded-xl border text-sm font-medium transition-colors ${
               ticketScope === "ROOM"
                 ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
@@ -92,7 +102,7 @@ export function TicketForm({
           </button>
           <button
             type="button"
-            onClick={() => setTicketScope("GENERAL")}
+            onClick={() => handleScopeChange("GENERAL")}
             className={`flex h-12 items-center justify-center rounded-xl border text-sm font-medium transition-colors ${
               ticketScope === "GENERAL"
                 ? "border-zinc-900 bg-zinc-900 text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-zinc-950"
@@ -143,7 +153,7 @@ export function TicketForm({
           onChange={(e) => setCategory(e.target.value)}
           className="h-12 w-full rounded-xl border border-border bg-surface px-3.5 text-base text-foreground focus:border-zinc-900 focus:outline-none dark:focus:border-zinc-100"
         >
-          {categories.map((cat) => (
+          {activeCategories.map((cat) => (
             <option key={cat} value={cat}>
               {cat}
             </option>
