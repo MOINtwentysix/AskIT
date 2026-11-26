@@ -21,7 +21,15 @@ export function AdminRoomsQR({ rooms }: { rooms: AdminRoomItem[] }) {
   const [building, setBuilding] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [printingRoomId, setPrintingRoomId] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  function triggerPrint(roomId: string | null) {
+    setPrintingRoomId(roomId);
+    setTimeout(() => {
+      window.print();
+    }, 50);
+  }
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "";
 
@@ -55,7 +63,7 @@ export function AdminRoomsQR({ rooms }: { rooms: AdminRoomItem[] }) {
           </div>
           <button
             type="button"
-            onClick={() => window.print()}
+            onClick={() => triggerPrint(null)}
             className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
           >
             <Printer className="h-4 w-4" />
@@ -117,10 +125,14 @@ export function AdminRoomsQR({ rooms }: { rooms: AdminRoomItem[] }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 print:grid-cols-2 print:gap-6">
           {rooms.map((room) => {
             const qrUrl = `${baseUrl}/ticket/new?room=${encodeURIComponent(room.code)}`;
+            const isHiddenInPrint =
+              printingRoomId !== null && printingRoomId !== room.id;
             return (
               <div
                 key={room.id}
-                className="print-break-inside-avoid rounded-xl border border-border bg-surface p-5 flex flex-col items-center text-center space-y-3 print:border-zinc-300 print:bg-white print:text-black"
+                className={`print-break-inside-avoid rounded-xl border border-border bg-surface p-5 flex flex-col items-center text-center space-y-3 print:border-zinc-300 print:bg-white print:text-black ${
+                  isHiddenInPrint ? "print:hidden" : ""
+                }`}
               >
                 <div className="space-y-0.5">
                   <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 print:bg-zinc-100 print:text-black">
@@ -142,6 +154,14 @@ export function AdminRoomsQR({ rooms }: { rooms: AdminRoomItem[] }) {
                 <p className="no-print font-mono text-[11px] text-muted break-all">
                   {qrUrl}
                 </p>
+                <button
+                  type="button"
+                  onClick={() => triggerPrint(room.id)}
+                  className="no-print inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
+                >
+                  <Printer className="w-3.5 h-3.5" />
+                  Einzeln drucken
+                </button>
               </div>
             );
           })}
